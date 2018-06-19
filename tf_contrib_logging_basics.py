@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 
-
 import numpy as np
 import tensorflow as tf
 
@@ -29,20 +28,35 @@ def main(unused_argv):
                                                 hidden_units=[10, 20, 10],
                                                 n_classes=3,
                                                 model_dir="/tmp/iris_model",
-                                                config=tf.contrib.learn.RunConfig(save_checkpoints_secs=1))
+                                                config= tf.contrib.learn.RunConfig(save_checkpoints_secs=1))
+    validation_metrics = {
+    "accuracy":
+        tf.contrib.learn.MetricSpec(
+            metric_fn=tf.contrib.metrics.streaming_accuracy,
+            prediction_key="classes"),
+    "precision":
+        tf.contrib.learn.MetricSpec(
+            metric_fn=tf.contrib.metrics.streaming_precision,
+            prediction_key="classes"),
+    "recall":
+        tf.contrib.learn.MetricSpec(
+            metric_fn=tf.contrib.metrics.streaming_recall,
+            prediction_key="classes")
+}
+
 
 
     validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
-        test_set.data,
-        test_set.data,
-        every_n_steps=50)
+    test_set.data,
+    test_set.target,
+    every_n_steps=50,
+    metrics = validation_metrics)
 
     # Fit model.
     classifier.fit(x=training_set.data,
                    y=training_set.target,
                    steps=2000,
-                   monitors=[validation_monitor]
-                   )
+                   monitors=[validation_monitor])
 
     # Evaluate accuracy.
     accuracy_score = classifier.evaluate(x=test_set.data,
